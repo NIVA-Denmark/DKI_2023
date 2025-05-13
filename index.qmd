@@ -1,0 +1,703 @@
+---
+title: "DKI Calculations"
+format:
+  html:
+    embed-resources: true
+    smooth-scroll: true
+    theme: cosmo
+    fontcolor: "#222140"
+    toc: true
+    toc-location: left
+    toc-expand: 2
+    toc-title: DKI Calculations
+    output-file: "index"
+    output-ext:  "html"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ambiR)
+library(readr)
+library(httr)
+library(jsonlite) 
+library(sf)
+library(fuzzyjoin)
+library(patchwork)
+
+source("R/utils.R")
+
+```
+
+Calculating DKI using the [ambiR](https://github.com/NIVA-Denmark/ambiR) package.
+
+# Species observation data
+
+## Read data
+
+Read species observation data downloaded from ODA.
+
+```{r read_data}
+
+bf <- read_delim("data/HentData_WDXSYOYGJE.csv", 
+                 delim = ";", escape_double=FALSE, 
+                 locale=locale(decimal_mark = ",", 
+                               grouping_mark = ".", 
+                               encoding = "WINDOWS-1252"), 
+                 trim_ws = TRUE, 
+                 show_col_types = FALSE)
+
+```
+
+## Check species names
+
+### Unique species names in observations
+
+Get unique species names from the observation data
+
+```{r unique species}
+
+species <- bf %>%
+  distinct(Artsnavn) 
+
+```
+
+Use the `.fix_name()` function from [utils.R](R/utils.R). This will do some simple corrections to species names e.g. replace any *indet.* in species names with *sp.* and remove any double spaces in names.
+
+```{r fix species names}
+
+species <- species %>% 
+  mutate(species = .fix_name(Artsnavn))  %>%
+  distinct(Artsnavn, species)
+
+```
+
+### Match with AMBI
+
+Check if there the species names can be matched with a name on the AMBI species list.
+
+```{r match species AMBI}
+
+species_match <- species %>%
+  left_join(ambiR::AMBI_species(), 
+            by=c("species"))
+
+```
+
+There are some species names which appear more than once in the AMBI database e.g. *Ophiuroidea sp.* This can result in a warning about *'unexpected many-to-many relationship'* when joining species names from observations with the AMBI database. This can be ignored. It will not cause any problems later.
+
+### Species names not matched
+
+Select the species names which were not matched with species names in the AMBI database.
+
+```{r unmatched species}
+
+species_unmatched <- species_match %>%
+  filter(is.na(group)) %>%
+  distinct(Artsnavn, species) %>%
+  arrange(Artsnavn)
+
+# save the list
+write.table(species_unmatched, file="results/species_unmatched.csv",
+            sep=",", col.names=T, row.names=F, quote=F)
+
+
+species_unmatched
+
+```
+
+There are **`r nrow(species_unmatched)`** *Artsnavn* which could not be matched with species in the AMBI database. They are listed in this file: [species_unmatched.csv](results/species_unmatched.csv)
+
+### Check names in WoRMs
+
+Species names which were not matched with the AMBI species list will be checked with the [WoRMS database](https://marinespecies.org/) using the `.GetSpeciesName()` function from [utils.R](R/utils.R). This can correct the cases where a deprecated species name has been recorded instead of the current recognized name.
+
+```{r check WoRMS}
+
+species_unmatched <- species_unmatched %>%
+  pull("species") %>%
+  unique()
+
+species_worms <- species_unmatched %>%
+  purrr::map(.GetSpeciesName) %>% 
+  unlist()
+
+species_unmatched <- data.frame(
+  species=species_unmatched,
+  speciesWoRMS= species_worms
+)
+
+
+```
+
+WoRMS does *not* add *sp.* to species names, so before comparing results from WoRMS with the existing species names, we will *fix* the names as we did previously.
+
+```{r fix worms results}
+
+species_unmatched <- species_unmatched  %>%
+  mutate(speciesWoRMS = .fix_name(speciesWoRMS))
+
+```
+
+### Select names corrected in WoRMs
+
+Now we will select only the WoRMS results where the species name returned by WoRMS is different from the existing species name. If a name we had already matches with the correct name in WoRMS, there is no need to update it.
+
+```{r select worms results}
+
+species_replace <- species_unmatched  %>%
+  mutate(speciesWoRMS = ifelse(species==speciesWoRMS, NA, speciesWoRMS)) %>%
+  filter(!is.na(speciesWoRMS))
+
+```
+
+This gives **`r nrow(species_replace)`** corrections of species names.
+
+### Make corrections in our original species list
+
+Now we will use the correct names returned by WoRMS to change the table matching `Artsnavn` to `species`
+
+```{r correct names after WoRMS}
+
+species2 <- species %>%
+  select(Artsnavn, species) %>%
+  left_join(species_replace, by="species")
+
+species2 <- species2 %>%
+  mutate(species=ifelse(is.na(speciesWoRMS),species,speciesWoRMS)) %>%
+  distinct(Artsnavn, species)
+
+```
+
+### Match with AMBI - 2nd attempt
+
+Now try to match the updated species list with AMBI species list.
+
+Again, any warnings about *many-to-many relationship* can be safely ignored at this stage.
+
+```{r  match species AMBI 2}
+
+species2_match <- species2 %>%
+  left_join(ambiR::AMBI_species(), by=c("species"))
+
+```
+
+### Species names not matched on 2nd attempt
+
+Now select only the species which were not matched.
+
+```{r unmatched species AMBI 2}
+
+species2_unmatched <- species2_match %>%
+  filter(is.na(group)) %>%
+  distinct(Artsnavn, species) %>%
+  arrange(Artsnavn)
+
+species2_unmatched
+
+```
+
+### *Fuzzy* matching
+
+The last thing we can try is to do a *fuzzy* join of species names using the [fuzzyjoin package](https://github.com/dgrtwo/fuzzyjoin). This joins species names in observations with species names in AMBI which are similar, rather than identical.
+
+We can limit the *fuzzyjoin* function to return only very similar matches by setting the `max_dist` argument to `1`. The default values is `2`. This will return more possible matches but some of them are likely to be incorrect. For example *Balanidae sp.* (a family of barnacles) is matched with *Maldanidae sp.* (a family of polychaetes). In any case, it is a good idea to check the results.
+
+```{r fuzzy}
+
+species2_fuzzy <- species2_unmatched %>%
+  distinct(species) %>%
+  rename(species_match=species)
+
+
+species2_fuzzy <- species2_fuzzy %>%
+  fuzzyjoin::stringdist_left_join(ambiR::AMBI_species(),
+                                  max_dist=1,
+                                  by=c("species_match"="species"),
+                                  distance_col = "dist")
+
+
+species2_replace <- species2_fuzzy %>%
+  filter(!is.na(species)) %>%
+  select(species=species_match, species_fuzzy=species)
+
+
+
+```
+
+Using the strictest match specifications (`max_dist = 1`), then `r nrow(species2_replace)` *fuzzy* matches are found:
+
+```{r fuzzy results}
+
+species2_replace
+
+```
+
+In this case the name *Priapulidae* recorded in the observations was actually the correct nomenclature. However our aim here is to find matches with the AMBI species list.
+
+### Update species list
+
+```{r update after fuzzy results}
+
+species3 <- species2 %>%
+  select(Artsnavn, species) %>%
+  left_join(species2_replace, by="species")
+
+species3 <- species3 %>%
+  mutate(species=ifelse(is.na(species_fuzzy),species,species_fuzzy)) %>%
+  select(Artsnavn, species) %>%
+  arrange(Artsnavn, species)
+
+# save the list
+
+write.table(species3, file="results/species_names.csv", 
+            sep=",", col.names=T, row.names=F, quote=F)
+
+```
+
+The full list of species names after corrections is here: [species_names.csv](results/species_names.csv)
+
+## Update observation data
+
+Add the corrected species names to the observation data
+
+```{r update observations}
+
+bf <- bf %>%
+  left_join(species3, by="Artsnavn") 
+  
+```
+
+# Salinity data
+
+After calculating AMBI, We will use the mean salinity at each sampling site to normalize DKI.
+
+## Read salinity data
+
+Read the data downloaded from ODA as csv.
+
+```{r read salinity data}
+
+# read salinity data (not saved in github repository - the file is 50 MB)
+
+psal <- read_delim("data/HentData_LFLXTQXRGW.csv", 
+                   delim = ";", escape_double=FALSE, 
+                   locale=locale(decimal_mark = ",", 
+                                 grouping_mark = ".", 
+                                 encoding = "WINDOWS-1252"), 
+                   trim_ws = TRUE, 
+                   show_col_types = FALSE)
+
+# strictly speaking the filter by Parameter is not necessary
+# keeping it in case CTD data including other parameters is used
+
+psal <- psal %>% 
+  filter(Parameter=="Salinitet") %>%
+  select(os_nr=ObservationsStedNr,
+         os_navn=ObservationsStedNavn, 
+         Længde, Bredde,
+         Dato,
+         z = `Dybde (m)`,
+         psal = KorrigeretResultat)
+
+```
+
+## Find deepest salinity measurement in each profile
+
+Arrange the data on each sample data by depth and take the deepest measurement
+
+```{r salinity bottom}
+
+# find deepest salinity measurement for each profile
+psal <- psal %>% 
+  group_by(os_nr, os_navn, Længde, Bredde, Dato) %>%
+  arrange(desc(z)) %>%
+  slice(1) %>%
+  ungroup()
+
+```
+
+## Find average salinity
+
+Calculate the average salinity within each waterbody ()
+
+```{r average salinity}
+
+# find average for each ov
+psal <- psal %>% 
+  group_by(os_nr, os_navn) %>%
+  summarise(lon=median(Længde), 
+            lat=median(Bredde), 
+            psal=mean(psal, na.rm=T), .groups = "drop")
+
+```
+
+## Join salinity data to benthic fauna sampling sites
+
+### Convert salinity mean values to spatial data
+
+Use the latitude and longitude information in the salinity data to create a
+spatial data (`sf`) object and then transform to UTM-32
+
+```{r salinity sf}
+
+psal <- psal %>% 
+  sf::st_as_sf(coords=c("lon","lat"), crs=sf::st_crs(4326)) %>%
+  sf::st_transform(crs=sf::st_crs(25832))
+
+```
+
+### Unique locations for bottom fauna samples
+
+Find unique locations for bottom fauna samples and convert to spatial data
+
+```{r bf sf}
+
+# get unique locations for bottom fauna samples
+
+bf_posn <- bf %>%
+  select(os_nr=ObservationsStedNr,
+         os_navn=ObservationsStedNavn, 
+         lon = `Prøvetagnings Længdegrad`,
+         lat = `Pprøvtagnings Breddegrad`) %>%
+  group_by(os_nr, os_navn) %>%
+  summarise(lon = median(lon),
+            lat=median(lat), .groups="drop")
+         
+bf_posn <- bf_posn %>%
+  sf::st_as_sf(coords=c("lon","lat"), crs=sf::st_crs(4326)) %>%
+  sf::st_transform(crs=sf::st_crs(25832))
+
+
+```
+
+### Match benthic fauna sample and salinity locations
+
+Find the closest salinity location to each benthic fauna sampling position
+
+```{r match salinity to bf}
+
+# find closest salinity point for each bottom fauna position
+closest <- sf::st_nearest_feature(bf_posn, psal)
+
+bf_posn$psal <- psal$psal[closest]
+
+bf_psal <- bf_posn %>%
+  sf::st_drop_geometry() %>%
+  select(os_nr, psal)
+
+```
+
+Now we have a mean salinity value for each observation position in the benthic fauna sampling data
+
+```{r salinity per bf}
+bf_psal
+
+```
+
+# Calculate DKI
+
+## Calculate DKI with pooled samples
+
+### Group samples
+
+For DKI v2, samples are pooled in groups to give a total sampling area of
+approximately 0.1 m^2
+
+```{r}
+
+bf_pooled <- bf %>%
+  rename(os_nr=ObservationsStedNr,
+         os_navn=ObservationsStedNavn)  %>%
+  mutate(samples_per_group = round(1000/`Prøveredskabsareal (cm2)`, digits = 0))
+
+
+# add pooled sample ID
+bf_pooled <- bf_pooled %>%
+  DKI_group_samples(
+    group_vars=c("os_navn","os_nr","Dato","Prøvetagningsudstyr"),
+    column_sample_id ="Prøvetagningsnummer",
+    column_samples_per_group="samples_per_group"
+    )
+
+# summarise within pooled samples
+bf_pooled <- bf_pooled %>%
+  group_by(os_nr, os_navn, Dato, Tid, 
+           Prøvetagningsudstyr, grp_id,
+           species) %>%
+  summarise(n=sum(`Antal (stk)`), .groups="drop")
+
+
+# first run with AMBI
+
+```
+
+### Calculate AMBI for pooled samples
+
+Instead of the original sample nr _Prøvetagningsnummer_, we use the ID for the 
+grouped samples ( _grp_id_ ) to identify replicates when calculating AMBI.
+
+```{r}
+
+ambi_res_pooled <- ambiR::AMBI(bf_pooled, 
+                    by=c("os_nr", "os_navn", "Dato", "Tid"),
+                    var_species = "species",
+                    var_count = "n",
+                    var_rep = "grp_id",
+                    interactive = F, 
+                    quiet= T)
+
+ambi_pooled <- ambi_res_pooled$AMBI
+
+```
+
+By default, the name of every species which could not be matched with a name in the 
+AMBI database is listed when calling the `AMBI()` function. Here we have used 
+the `quiet = TRUE` option. 
+
+Remember to check which species names were not matched. We have already tested our data before calculating AMBI but it is always a good idea to check once more.
+
+```{r}
+
+not_found <- ambi_res_pooled$matched %>%
+  filter(is.na(group)) %>%
+  distinct(species)
+
+not_found
+
+```
+
+Check also any warnings generated. If the total number of species is too small or 
+the total number of individuals, then AMBI should not be used.
+
+```{r}
+
+ambi_res_pooled$warnings
+
+```
+
+
+### Add salinity information
+
+To calculate DKI from the AMBI results for pooled samples, we need to join them 
+to the salinity information calculated [above](#salinity-data).
+
+```{r}
+
+ambi_pooled <- ambi_pooled %>%
+  select(os_nr, os_navn, Dato, Tid, AMBI, H, S, fNA, N) %>%
+  left_join(bf_psal, by="os_nr")
+
+```
+
+### Calculate DKI for pooled samples
+
+Now we can calculate DKI
+
+```{r}
+
+dki_pooled <- ambi_pooled %>%
+  mutate(DKI = DKI2(AMBI, H, N, psal))
+
+# save the results
+
+write.table(dki_pooled, file="results/DKI_pooled.csv", 
+            sep=",", col.names=T, row.names=F, quote=F)
+
+dki_pooled
+
+```
+
+Download the results for DKI based on pooled samples: [DKI_pooled.csv](results/DKI_pooled.csv)
+
+## Calculate DKI with individual samples
+
+Here DKI is based on AMBI calculated from individual ungrouped samples.
+
+### Calculate AMBI
+
+This time we use the original sample nr _Prøvetagningsnummer_ to identify
+replicates when calculating AMBI.
+
+```{r}
+
+bf2 <- bf %>%
+  select(os_nr=ObservationsStedNr,
+         os_navn=ObservationsStedNavn,
+         Dato, 
+         Tid,
+         n=`Antal (stk)`,
+         sample_nr = Prøvetagningsnummer,
+         species)
+
+ambi_res <- ambiR::AMBI(bf2, 
+                     by=c("os_nr", "os_navn", "Dato", "Tid"),
+                     var_species = "species",
+                     var_count = "n",
+                     var_rep = "sample_nr",
+                     interactive = F, 
+                     quiet= T)
+
+
+ambi <- ambi_res$AMBI
+```
+
+Check warnings generated by the `AMBI()`function
+
+```{r}
+
+ambi_res_pooled$warnings
+
+```
+
+### Add salinity information
+
+As with the grouped samples, we still need salinity values to calculate DKI.
+
+```{r}
+
+ambi <- ambi %>%
+  select(os_nr, os_navn, Dato, Tid, AMBI, H, S, fNA, N) %>%
+  left_join(bf_psal, by="os_nr")
+
+
+```
+
+### Calculate DKI 
+
+Calculate DKI from AMBI results and salinity.
+
+```{r}
+
+dki <- ambi %>%
+  select(os_nr, os_navn, Dato, Tid, AMBI, H, S, fNA, N) %>%
+  left_join(bf_psal, by="os_nr") %>%
+  mutate(DKI = DKI2(AMBI, H, N, psal))
+
+# save the results
+
+write.table(dki, file="results/DKI.csv", 
+            sep=",", col.names=T, row.names=F, quote=F)
+
+dki
+
+```
+
+Download the results for DKI based on individual samples: [DKI.csv](results/DKI.csv)
+
+
+# Compare pooled and individual
+
+Compare DKI based on AMBI calculated from individual samples with DKI from pooled samples
+
+```{r}
+
+dki_compare <- dki %>%
+  select(os_nr, os_navn, Dato, Tid, psal, DKI) %>%
+  left_join(dki_pooled %>%
+              select(os_nr, Dato, Tid, DKI_pooled=DKI), 
+            by=c("os_nr", "Dato", "Tid"))
+
+dki_compare <- dki_compare %>%
+  mutate(diff=DKI_pooled-DKI)
+
+# save the results
+
+write.table(dki_compare, file="results/DKI_comparison.csv", 
+            sep=",", col.names=T, row.names=F, quote=F)
+
+```
+
+Download the data for the comparison of DKI for pooled and individual samples:  [DKI_comparison.csv](results/DKI_comparison.csv)
+
+## Show comparison graphically
+
+Plot the different DKI results
+
+```{r}
+#| fig-height: 5
+#| fig-width: 10
+
+dki_min <- min(dki_compare$DKI)
+dki_min_p <- min(dki_compare$DKI_pooled)
+dki_min <- pmax(dki_min, dki_min_p)
+
+dki_max <- max(dki_compare$DKI)
+dki_max_p <- max(dki_compare$DKI_pooled)
+dki_max <- pmax(dki_max, dki_max_p)
+
+hist_bin <- 0.002
+diff_min <- hist_bin*floor(min(dki_compare$diff)/hist_bin)
+diff_max <- hist_bin*ceiling(max(dki_compare$diff)/hist_bin)
+diff_mean <- mean(dki_compare$diff)
+
+
+# data for 1:1 line
+df11 <- data.frame(x=c(dki_min-0.01, dki_max+0.01)) %>%
+  mutate(y=x)
+
+df00 <- data.frame(x=c(dki_min-0.01, dki_max+0.01)) %>%
+  mutate(y=c(0,0))
+
+p1 <- ggplot() +
+  geom_point(data=dki_compare, 
+             aes(x=DKI, y=DKI_pooled, colour = psal)) +
+  geom_line(data=df11, aes(x=x,y=y), colour="black", 
+            linetype=2, linewidth=0.3, alpha=0.3) +
+  scale_color_distiller(palette = "Spectral", 
+                        limits=c(5,35), breaks=c(5,15,25,35)) +
+  theme_minimal() +
+  scale_x_continuous("DKI (individual samples)") +
+  scale_y_continuous("DKI (pooled samples)") +
+  coord_cartesian(xlim = c(dki_min, dki_max),
+                  ylim = c(dki_min, dki_max)) +
+  theme(legend.position = "inside", 
+        legend.position.inside = c(0.8,0.1),
+        legend.justification = c(0,0))
+
+p2 <- ggplot() +
+  geom_point(data=dki_compare, 
+             aes(x=DKI, y=diff, colour = psal)) +
+    geom_line(data=df00, aes(x=x,y=y), colour="black", 
+            linetype=2, linewidth=0.3, alpha=0.3) +
+  scale_color_distiller(palette = "Spectral", 
+                        limits=c(5,35), breaks=c(5,15,25,35),
+                        guide="none") +
+  scale_x_continuous("DKI (individual samples)") +
+  scale_y_continuous("Difference (pooled - individual)") +
+  theme_minimal() +
+  coord_cartesian(xlim=c(dki_min, dki_max),
+                  ylim=c(diff_min,diff_max))
+
+p3 <- ggplot() +
+  geom_histogram(data=dki_compare,
+                 breaks=seq(diff_min, diff_max, hist_bin),
+               aes(y=diff),
+                 alpha=0.5,
+               colour = 'darkgrey',
+               fill = 'lightgrey',
+               orientation = "y") +
+  geom_hline(yintercept = diff_mean, colour="red", 
+            linetype=2, linewidth=0.3, alpha=0.3) +
+  coord_cartesian(ylim=c(diff_min,diff_max)) +
+  theme_void() 
+
+
+p <- p1 + p2 + p3 +
+  plot_layout(ncol=3, widths = c(5,5,1))
+
+
+p
+
+
+
+
+```
+The dotted grey line in the left-hand figure shows the 1:1 line (DKI for the two 
+methods is equal). The dotted grey line in the right-hand figure shows
+_Difference = 0_. The red dotted line in the histogram shows the mean difference
+(`r print(diff_mean, digits=3)`)
+

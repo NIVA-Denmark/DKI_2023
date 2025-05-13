@@ -141,8 +141,10 @@ DKI_group_samples <- function(df, group_vars=c(),
 
 
 .fix_name <- function(species){
+  species <- stringr::str_trim(species)
   species <- stringr::str_to_sentence(species)
   species <- stringr::str_replace_all(species, "  ", " ")
+  species <- stringr::str_replace_all(species, " indet.", "")
   suffix <- ifelse(stringr::str_detect(species," "),""," sp.")
   species <- ifelse(is.na(species),NA,paste0(species, suffix))
   return(species)
