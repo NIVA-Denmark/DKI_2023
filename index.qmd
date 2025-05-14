@@ -111,7 +111,7 @@ species_unmatched <- species_match %>%
 
 # save the list
 write.table(species_unmatched, file="results/species_unmatched.csv",
-            sep=",", col.names=T, row.names=F, quote=F)
+            sep=",", col.names=T, row.names=F, quote=T)
 
 
 species_unmatched
@@ -268,7 +268,7 @@ species3 <- species3 %>%
 # save the list
 
 write.table(species3, file="results/species_names.csv", 
-            sep=",", col.names=T, row.names=F, quote=F)
+            sep=",", col.names=T, row.names=F, quote=T)
 
 ```
 
@@ -522,7 +522,7 @@ dki_pooled <- ambi_pooled %>%
 # save the results
 
 write.table(dki_pooled, file="results/DKI_pooled.csv", 
-            sep=",", col.names=T, row.names=F, quote=F)
+            sep=",", col.names=T, row.names=F, quote=T)
 
 dki_pooled
 
@@ -597,7 +597,7 @@ dki <- ambi %>%
 # save the results
 
 write.table(dki, file="results/DKI.csv", 
-            sep=",", col.names=T, row.names=F, quote=F)
+            sep=",", col.names=T, row.names=F, quote=T)
 
 dki
 
@@ -624,7 +624,7 @@ dki_compare <- dki_compare %>%
 # save the results
 
 write.table(dki_compare, file="results/DKI_comparison.csv", 
-            sep=",", col.names=T, row.names=F, quote=F)
+            sep=",", col.names=T, row.names=F, quote=T)
 
 ```
 
