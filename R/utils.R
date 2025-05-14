@@ -75,7 +75,7 @@ DKI_group_samples <- function(df, group_vars=c(),
 }
 
 
-.GetSpeciesName<-function(searchtext, verbose=F){
+.GetSpeciesNameWoRMS<-function(searchtext, verbose=F){
   # ---------- get the AphiaID from the search text ---------------
   #Build the URL to get the data from
   
@@ -139,14 +139,66 @@ DKI_group_samples <- function(df, group_vars=c(),
   return(correct_name)
 }
 
+#' functions for matching species name with names in a list
+#' ignoring whether or not sp. is used in the AMBI list or the observation
+#' species name
+
+.species_match_single<- function(species, species_match, exact=T){
+
+  species <- ifelse(is.na(species),"",species)
+  res <- species_match[species_match==species]
+  
+  if(length(res)==0){
+    if(exact!=T){
+      species_match2 <- stringr::str_remove_all(species_match, " sp.")
+      species2 <- stringr::str_remove_all(species, " sp\\.")
+      species2 <- stringr::str_remove_all(species2, " spp\\.")
+      res <- species_match[species_match2==species2]
+      if(length(res)==0){
+        res <- NA_character_
+      }
+    }else{
+      res <- NA_character_
+    }
+  }
+  if(length(res)>1){
+    n_res <- length(res)
+    msg <- paste0(res, collapse = ", ")
+    msg <- paste0(species, " had ", n_res, " matches: ", msg)
+    cli::cli_warn(msg)
+    res <- res[1]
+  }
+  return(res)
+}
+
+.species_match <- function(df_obs, df_species,
+                           var_species_obs="species",
+                           var_species="species",
+                           exact=T){
+  
+  species_list <- df_species %>%
+    pull(var_species)
+  
+  species_match <- df_obs %>%
+    pull(var_species_obs) %>%
+    lapply(.species_match_single, species_list, exact) %>%
+    unlist()
+  
+  df_obs$species_match <- species_match
+  
+  return(df_obs)
+}
 
 .fix_name <- function(species){
-  species <- stringr::str_trim(species)
+  # if the name includes a comma, extract only the part before the comma
+  # e.g. "Polychaeta, havbørsteorme" -> "Polychaeta"
+  species <- stringr::str_remove(species, ",.+")
+  species <- stringr::str_remove(species, "\\(\\w+\\)")
   species <- stringr::str_to_sentence(species)
   species <- stringr::str_replace_all(species, "  ", " ")
   species <- stringr::str_replace_all(species, " indet.", "")
-  suffix <- ifelse(stringr::str_detect(species," "),""," sp.")
-  species <- ifelse(is.na(species),NA,paste0(species, suffix))
+  species <- stringr::str_remove(species, "_(\\w+_)")
+  
   return(species)
   }
 

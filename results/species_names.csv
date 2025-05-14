@@ -1,5 +1,5 @@
 Artsnavn,species
-AMPHIPODA,Amphipoda sp.
+AMPHIPODA,Amphipoda
 ANTHURIDAE,Anthuridae sp.
 Abra alba,Abra alba
 Abra nitida,Abra nitida
@@ -28,7 +28,7 @@ Ampharetidae indet.,Ampharetidae sp.
 Amphibalanus improvisus,Amphibalanus improvisus
 Amphilochoides odontonyx,Amphilochoides odontonyx
 Amphilochoides serratipes,Amphilochoides serratipes
-Amphipoda indet.,Amphipoda sp.
+Amphipoda indet.,Amphipoda
 Amphiura chiajei,Amphiura chiajei
 Amphiura filiformis,Amphiura filiformis
 Amphiura sp.,Amphiura sp.
@@ -67,9 +67,9 @@ Astrorhiza  limicola,Astrorhiza limicola
 Athanas nitescens,Athanas nitescens
 Atylus swammerdami,Nototropis swammerdamei
 Atylus vedlomensis,Atylus vedlomensis
-Balanidae indet.,Balanidae sp.
+Balanidae indet.,Balanidae
 Balanus crenatus,Balanus crenatus
-Balanus sp.,Balanus sp.
+Balanus sp.,Balanus
 Baltidrilus costatus,Baltidrilus costatus
 Barnea candida,Barnea candida
 Bathyporeia elegans,Bathyporeia elegans
@@ -82,10 +82,10 @@ Bathyporeia sp.,Bathyporeia sp.
 Bathyporeia tenuipes,Bathyporeia tenuipes
 Bela nebula,Bela nebula
 Bittium reticulatum,Bittium reticulatum
-Bivalvia indet.,Bivalvia sp.
+Bivalvia indet.,Bivalvia
 Boreotrophon truncatus,Boreotrophon truncatus
 Botryllus schlosseri,Botryllus schlosseri
-Brachyura indet.,Brachyura sp.
+Brachyura indet.,Brachyura
 Brada villosa,Brada villosa
 Branchiostoma lanceolatum,Branchiostoma lanceolatum
 Brissopsis lyrifera,Brissopsis lyrifera
@@ -94,9 +94,9 @@ Buccinum undatum,Buccinum undatum
 Bylgides sarsi,Bylgides sarsi
 CEPHALASPIDEA,Cephalaspidea sp.
 CUCUMARIIDAE,Cucumariidae sp.
-Calanoida indet.,Calanoida sp.
+Calanoida indet.,Calanoida
 Callinassa subterranea,Callianassa subterranea
-Campanulariidae indet.,Campanulariidae sp.
+Campanulariidae indet.,Campanulariidae
 Campylaspis glabra,Campylaspis glabra
 Capitella capitata,Capitella capitata
 Capitella sp.,Capitella sp.
@@ -105,8 +105,8 @@ Capitellides giardi,Capitellides giardi
 Caprella linearis,Caprella linearis
 Carcinus maenas,Carcinus maenas
 Cardiidae indet.,Cardiidae sp.
-Caudofoveata indet.,Caudofoveata sp.
-Caulleriella sp.,Caulleriella sp.
+Caudofoveata indet.,Caudofoveata
+Caulleriella sp.,Caulleriella
 Cerastoderma edule,Cerastoderma edule
 Cerastoderma glaucum,Cerastoderma glaucum
 Ceratocephale loveni,Ceratocephale loveni
@@ -128,7 +128,7 @@ Cirratulus cirratus,Cirratulus cirratus
 Clausinella fasciata,Clausinella fasciata
 Clymenura borealis,Clymenura borealis
 Cochlodesma praetenue,Cochlodesma praetenue
-Copepoda indet.,Copepoda sp.
+Copepoda indet.,Copepoda
 Corbula gibba,Corbula gibba
 Corophiidae indet.,Corophiidae sp.
 Corophium affine,Corophium affine
@@ -140,12 +140,12 @@ Corystes cassivelaunus,Corystes cassivelaunus
 Crangon crangon,Crangon crangon
 Crenella decussata,Crenella decussata
 Crepidula fornicata,Crepidula fornicata
-Crustacea indet.,Crustacea sp.
+Crustacea indet.,Crustacea
 Cucumaria sp.,Cucumaria sp.
 Cumacea indet.,Cumacea sp.
 Cyathura carinata,Cyathura carinata
 Cylichna cylindracea,Cylichna cylindracea
-DONACIA,Donacia sp.
+DONACIA,Tethya
 Dasybranchus caducus,Dasybranchus caducus
 Decapoda indet.,Decapoda sp.
 Dexamine spinosa,Dexamine spinosa
@@ -166,7 +166,7 @@ Dipolydora quadrilobata,Dipolydora quadrilobata
 Donax vittatus,Donax vittatus
 Dosinia exoleta,Dosinia exoleta
 Dosinia lupinus,Dosinia lupinus
-EULIMIDAE,Eulimidae sp.
+EULIMIDAE,Eulimidae
 EXOGONE,Exogone sp.
 Ebalia tuberosa,Ebalia tuberosa
 Ebalia tumefacta,Ebalia tumefacta
@@ -211,7 +211,7 @@ Euspira pallida,Euspira pallida
 Euzonus flabelligerus,Euzonus flabelligerus
 Exogone sp.,Exogone sp.
 Fabricia stellaris,Fabricia stellaris
-Foraminifera,Foraminifera sp.
+Foraminifera,Foraminifera
 GONIADIDAE,Goniadidae sp.
 Galathea intermedia,Galathea intermedia
 Galathowenia oculata,Galathowenia oculata
@@ -219,7 +219,7 @@ Gammarus locusta,Gammarus locusta
 Gammarus salinus,Gammarus salinus
 Gammarus sp.,Gammarus sp.
 Gari fervensis,Gari fervensis
-Gastropoda indet.,Gastropoda sp.
+Gastropoda indet.,Gastropoda
 Gastrosaccus spinifer,Gastrosaccus spinifer
 Gattyana cirrosa,Gattyana cirrhosa
 Gibbula cineraria,Gibbula cineraria
@@ -235,7 +235,7 @@ Glycera tesselata,Glycera tesselata
 Glycinde nordmanni,Glycinde nordmanni
 Gnathia oxyurea,Gnathia oxyuraea
 Gnathia sp.,Gnathia sp.
-Gobiidae indet.,Gobiidae sp.
+Gobiidae indet.,Gobiidae
 Golfingia sp.,Golfingia sp.
 Golfingia vulgaris,Golfingia vulgaris
 Golfingiidae indet.,Golfingiidae sp.
@@ -267,17 +267,17 @@ Hippasteria phrygiana,Hippasteria phrygiana
 Hippomedon denticulatus,Hippomedon denticulatus
 Holothuroidea indet.,Holothuroidea sp.
 Hyala vitrea,Hyala vitrea
-Hydracarina indet.,Hydrachnidia sp.
+Hydracarina indet.,Hydrachnidia
 Hydrobia sp.,Hydrobia sp.
 Hydrobiidae indet.,Hydrobiidae sp.
-Hydrobius sp.,Hydrobius sp.
+Hydrobius sp.,Hydrobius
 Hydroides norvegica,Hydroides norvegica
 Hydrozoa indet.,Hydrozoa sp.
 Idotea balthica,Idotea balthica
 Idotea chelipes,Idotea chelipes
 Idotea viridis,Idotea chelipes
 Iphinoe trispinosa,Iphinoe trispinosa
-Isaeidae indet.,Isaeidae sp.
+Isaeidae indet.,Isaeidae
 Jaera albifrons,Jaera albifrons
 Jassa pusilla,Jassa pusilla
 Jassa sp.,Jassa sp.
@@ -287,10 +287,10 @@ Lamprops fasciatus,Lamprops fasciatus
 Lanice conchilega,Lanice conchilega
 Lapidoplax buski,Labidoplax buskii
 Lembos longipes,Lembos longipes
-Lepidepecreum longicorne,Lepidepecreum longicorne
+Lepidepecreum longicorne,Lepidepecreum longicornis
 Lepidochitona cinereus,Lepidochitona cinerea
 Lepidonotus squamatus,Lepidonotus squamatus
-Lepidoptera indet.,Lepidoptera sp.
+Lepidoptera indet.,Lepidoptera
 Leptocheirus hirsutimanus,Leptocheirus hirsutimanus
 Leptochiton asellus,Leptochiton asellus
 Leptognathia breviremis,Leptognathia breviremis
@@ -357,7 +357,7 @@ NEREIDIDAE,Nereididae sp.
 Natatolana borealis,Natatolana borealis
 Nebalia bipes,Nebalia bipes
 Nematoda indet.,Nematoda sp.
-Nemertini indet.,Nemertea sp.
+Nemertini indet.,Nemertea
 Neoamphitrite figulus,Neoamphitrite figulus
 Neoamphitrite sp.,Neoamphitrite sp.
 Nephtys assimilis,Nephtys assimilis
@@ -376,7 +376,7 @@ Nicomache lumbricalis,Nicomache lumbricalis
 Notomastus latericeus,Notomastus latericeus
 Nucula nitidosa,Nucula nitidosa
 Nuculana minuta,Nuculana minuta
-Nudibranchia indet.,Nudibranchia sp.
+Nudibranchia indet.,Nudibranchia
 OPHELIA,Ophelia sp.
 ORCHOMENELLA,Orchomenella sp.
 OSTRACODA, Muslingekrebs,Ostracoda sp.
@@ -394,8 +394,8 @@ Orchomenella nana,Orchomenella nana
 Ostracoda indet.,Ostracoda sp.
 Owenia fusiformis,Owenia fusiformis
 PHORONIS,Phoronis sp.
-PISCES,Pisces sp.
-POLYCHAETA, Havbørsteorme,Polychaeta sp.
+PISCES,Pisces
+POLYCHAETA, Havbørsteorme,Polychaeta
 Pachycerianthus multiplicatus,Pachycerianthus multiplicatus
 Pagurus bernhardus,Pagurus bernhardus
 Palaemon elegans,Palaemon elegans
@@ -414,7 +414,7 @@ Peringia ulvae,Peringia ulvae
 Perioculodes longimanus,Perioculodes longimanus
 Petaloproctus tenuis borealis,Petaloproctus borealis
 Petricolaria pholadiformis,Petricolaria pholadiformis
-Phascolion strombi,Phascolion (phascolion) strombus strombus
+Phascolion strombi,Phascolion strombus strombus
 Phaxas pellucidus,Phaxas pellucidus
 Pherusa plumosa,Pherusa plumosa
 Philine aperta,Philine aperta
@@ -445,12 +445,12 @@ Platynereis dumerilii,Platynereis dumerilii
 Podarkeopsis helgolandicus,Podarkeopsis helgolandicus
 Podocoryna carnea,Podocoryna carnea
 Poecilochaetus serpens,Poecilochaetus serpens
-Polychaeta indet.,Polychaeta sp.
+Polychaeta indet.,Polychaeta
 Polycirrus medusa,Polycirrus medusa
 Polycirrus norvegicus,Polycirrus norvegicus
 Polycirrus plumosus,Polycirrus plumosus
 Polycirrus sp.,Polycirrus sp.
-Polycladida indet.,Polycladida sp.
+Polycladida indet.,Polycladida
 Polydora ciliata,Polydora ciliata
 Polydora cornuta,Polydora cornuta
 Polydora sp.,Polydora sp.
@@ -458,13 +458,13 @@ Polynoidae indet.,Polynoidae sp.
 Polyphysia crassa,Polyphysia crassa
 Pontocrates altamarinus,Pontocrates altamarinus
 Pontocrates arenarius,Pontocrates arenarius
-Porifera indet.,Porifera sp.
+Porifera indet.,Porifera
 Potamopyrgus antipodarum,Potamopyrgus antipodarum
 Praunus inermis,Praunus inermis
 Praxillella affinis,Praxillella affinis
 Praxillella praetermissa,Praxillella praetermissa
 Praxillella sp.,Praxillella sp.
-Priapulidae indet.,Priapulidae sp.
+Priapulidae indet.,Priapulidae
 Priapulus caudatus,Priapulus caudatus
 Prionospio cirrifera,Prionospio cirrifera
 Prionospio fallax,Prionospio fallax
@@ -477,7 +477,7 @@ Psammechinus miliaris,Psammechinus miliaris
 Pseudamussium peslutrae,Pseudamussium peslutrae
 Pseudione borealis,Pseudione borealis
 Pseudione tuberculata,Pseudione borealis
-Pseudocuma longicornis,Pseudocuma (pseudocuma) longicorne
+Pseudocuma longicornis,Pseudocuma longicorne
 Pseudocuma similis,Chama pulchella
 Pseudomystides limbata,Pseudomystides limbata
 Pseudopolydora antennata,Pseudopolydora antennata
@@ -500,7 +500,7 @@ Scolelepis squamata,Scolelepis squamata
 Scolelepis tridentata,Scolelepis tridentata
 Scoloplos armiger,Scoloplos armiger
 Scrobicularia plana,Scrobicularia plana
-Sedentaria indet.,Sedentaria sp.
+Sedentaria indet.,Sedentaria
 Semibalanus balanoides,Semibalanus balanoides
 Sigalion mathildae,Sigalion mathildae
 Siphonoecetes kroyeranus,Siphonoecetes kroyeranus
@@ -514,7 +514,7 @@ Spiophanes bombyx,Spiophanes bombyx
 Spiophanes kroyeri,Spiophanes kroyeri
 Spirobranchus triqueter,Spirobranchus triqueter
 Spirorbis sp.,Spirorbis sp.
-Spirorbis spirorbis,Spirorbis (spirorbis) spirorbis
+Spirorbis spirorbis,Spirorbis spirorbis
 Spisula elliptica,Spisula elliptica
 Spisula solida,Spisula solida
 Spisula subtruncata,Spisula subtruncata
@@ -522,7 +522,7 @@ Sthenelais limicola,Sthenelais limicola
 Streblospio shrubsolii,Streblospio shrubsolii
 Streptosyllis websteri,Streptosyllis websteri
 Strongylocentrotus droebachiensis,Strongylocentrotus droebachiensis
-Syllidae indet.,Syllidae sp.
+Syllidae indet.,Syllidae
 Syllidia armata,Syllidia armata
 Syllis gracilis,Syllis gracilis
 Synchelidium haplocheles,Synchelidium haplocheles
@@ -537,10 +537,10 @@ Tellimya ferruginosa,Tellimya ferruginosa
 Tellimya tenella,Tellimya tenella
 Tellina fabula,Tellina fabula
 Tellina tenuis,Tellina tenuis
-Terebellida indet.,Terebellida sp.
+Terebellida indet.,Terebellida
 Terebellidae indet.,Terebellidae sp.
 Terebellides stroemi,Terebellides stroemii
-Terebellomorpha indet.,Terebellomorpha sp.
+Terebellomorpha indet.,Terebellomorpha
 Testudinalia testudinalis,Testudinalia testudinalis
 Tharyx killariensis,Tharyx killariensis
 Theodoxus fluviatilis,Theodoxus fluviatilis
@@ -550,7 +550,7 @@ Tonicella rubra,Tonicella rubra
 Travisia forbesii,Travisia forbesii
 Trichobranchus glacialis,Trichobranchus glacialis
 Trichobranchus roseus,Trichobranchus roseus
-Trichoptera indet.,Trichoptera sp.
+Trichoptera indet.,Trichoptera
 Tritia reticulata,Tritia reticulata
 Tritia varicosa,Tritia varicosa
 Trochochaeta multisetosa,Trochochaeta multisetosa

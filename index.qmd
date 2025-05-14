@@ -38,7 +38,7 @@ Calculating DKI using the [ambiR](https://github.com/NIVA-Denmark/ambiR) package
 
 ## Read data
 
-Read species observation data downloaded from ODA.
+Read species observation data downloaded from ODA [HentData_WDXSYOYGJE.csv](data/HentData_WDXSYOYGJE.csv).
 
 ```{r read_data}
 
@@ -65,7 +65,7 @@ species <- bf %>%
 
 ```
 
-Use the `.fix_name()` function from [utils.R](R/utils.R). This will do some simple corrections to species names e.g. replace any *indet.* in species names with *sp.* and remove any double spaces in names.
+Use the `.fix_name()` function from [utils.R](R/utils.R). This will do some simple corrections to species names e.g. replace any *indet.* in species names and remove any double spaces in names.
 
 ```{r fix species names}
 
@@ -77,17 +77,26 @@ species <- species %>%
 
 ### Match with AMBI
 
-Check if there the species names can be matched with a name on the AMBI species list.
+Check if there the species names can be matched with a name on the AMBI species list. By default, the function `.species_match()` from [utils.R](R/utils.R) will **not** match a family name in the observations without _sp._ with a family name in AMBI where _sp._ is included. Bu using the `exact = FALSE` argument, we also get these matches.
 
 ```{r match species AMBI}
 
 species_match <- species %>%
-  left_join(ambiR::AMBI_species(), 
-            by=c("species"))
+  .species_match(ambiR::AMBI_species(), exact=F)
 
 ```
 
-There are some species names which appear more than once in the AMBI database e.g. *Ophiuroidea sp.* This can result in a warning about *'unexpected many-to-many relationship'* when joining species names from observations with the AMBI database. This can be ignored. It will not cause any problems later.
+There are some species names which appear more than once in the AMBI database e.g. *Ophiuroidea sp.* This results in a warning when joining species names from observations with the AMBI database. The warning can be safely ignored. It will not cause any problems later.
+
+For species which did have a match, replace the look-up name with the one matched in 
+the AMBI list.
+
+```{r update matched species}
+
+species <- species_match %>%
+  mutate(species = ifelse(is.na(species_match), species, species_match))
+
+```
 
 ### Species names not matched
 
@@ -96,7 +105,7 @@ Select the species names which were not matched with species names in the AMBI d
 ```{r unmatched species}
 
 species_unmatched <- species_match %>%
-  filter(is.na(group)) %>%
+  filter(is.na(species_match)) %>%
   distinct(Artsnavn, species) %>%
   arrange(Artsnavn)
 
@@ -113,7 +122,7 @@ There are **`r nrow(species_unmatched)`** *Artsnavn* which could not be matched 
 
 ### Check names in WoRMs
 
-Species names which were not matched with the AMBI species list will be checked with the [WoRMS database](https://marinespecies.org/) using the `.GetSpeciesName()` function from [utils.R](R/utils.R). This can correct the cases where a deprecated species name has been recorded instead of the current recognized name.
+Species names which were not matched with the AMBI species list will be checked with the [WoRMS database](https://marinespecies.org/) using the `.GetSpeciesNameWoRMS()` function from [utils.R](R/utils.R). This can correct the cases where a deprecated species name has been recorded instead of the currently accepted name.
 
 ```{r check WoRMS}
 
@@ -122,7 +131,7 @@ species_unmatched <- species_unmatched %>%
   unique()
 
 species_worms <- species_unmatched %>%
-  purrr::map(.GetSpeciesName) %>% 
+  purrr::map(.GetSpeciesNameWoRMS) %>% 
   unlist()
 
 species_unmatched <- data.frame(
@@ -133,7 +142,9 @@ species_unmatched <- data.frame(
 
 ```
 
-WoRMS does *not* add *sp.* to species names, so before comparing results from WoRMS with the existing species names, we will *fix* the names as we did previously.
+Before comparing results from WoRMS with the existing species names, we will *fix* the names as we did previously.
+
+For example, we need to remove parts within parenthesis from WoRMS names e.g. _Phascolion (Phascolion) strombus_ because the AMBI list does not include these.
 
 ```{r fix worms results}
 
@@ -151,6 +162,8 @@ Now we will select only the WoRMS results where the species name returned by WoR
 species_replace <- species_unmatched  %>%
   mutate(speciesWoRMS = ifelse(species==speciesWoRMS, NA, speciesWoRMS)) %>%
   filter(!is.na(speciesWoRMS))
+
+species_replace
 
 ```
 
@@ -176,12 +189,12 @@ species2 <- species2 %>%
 
 Now try to match the updated species list with AMBI species list.
 
-Again, any warnings about *many-to-many relationship* can be safely ignored at this stage.
+Again, any warnings about about multiple matches can be safely ignored at this stage.
 
 ```{r  match species AMBI 2}
 
 species2_match <- species2 %>%
-  left_join(ambiR::AMBI_species(), by=c("species"))
+  .species_match(ambiR::AMBI_species(), exact=F)
 
 ```
 
@@ -192,7 +205,7 @@ Now select only the species which were not matched.
 ```{r unmatched species AMBI 2}
 
 species2_unmatched <- species2_match %>%
-  filter(is.na(group)) %>%
+  filter(is.na(species_match)) %>%
   distinct(Artsnavn, species) %>%
   arrange(Artsnavn)
 
@@ -215,7 +228,7 @@ species2_fuzzy <- species2_unmatched %>%
 
 species2_fuzzy <- species2_fuzzy %>%
   fuzzyjoin::stringdist_left_join(ambiR::AMBI_species(),
-                                  max_dist=1,
+                                  max_dist=2,
                                   by=c("species_match"="species"),
                                   distance_col = "dist")
 
@@ -228,7 +241,8 @@ species2_replace <- species2_fuzzy %>%
 
 ```
 
-Using the strictest match specifications (`max_dist = 1`), then `r nrow(species2_replace)` *fuzzy* matches are found:
+Using the strictest match specifications (`max_dist = 1`), then `r nrow(species2_replace)` *fuzzy* 
+`r ifelse(nrow(species2_replace)>1,"matches are","match is")` found:
 
 ```{r fuzzy results}
 
@@ -236,7 +250,7 @@ species2_replace
 
 ```
 
-In this case the name *Priapulidae* recorded in the observations was actually the correct nomenclature. However our aim here is to find matches with the AMBI species list.
+In this case the name *Lepidepecreum longicorne* recorded in the observations was actually the accepted nomenclature. However our aim here is to find matches with the AMBI species list. So we will change the name to the matched *Lepidepecreum longicornis*
 
 ### Update species list
 
@@ -268,6 +282,9 @@ Add the corrected species names to the observation data
 
 bf <- bf %>%
   left_join(species3, by="Artsnavn") 
+
+
+
   
 ```
 
@@ -519,7 +536,7 @@ Here DKI is based on AMBI calculated from individual ungrouped samples.
 
 ### Calculate AMBI
 
-This time we use the original sample nr _Prøvetagningsnummer_ to identify
+This time we use the original sample ID _Prøvetagningsnummer_ to identify
 replicates when calculating AMBI.
 
 ```{r}
@@ -619,7 +636,7 @@ Plot the different DKI results
 
 ```{r}
 #| fig-height: 5
-#| fig-width: 10
+#| fig-width: 11
 
 dki_min <- min(dki_compare$DKI)
 dki_min_p <- min(dki_compare$DKI_pooled)
@@ -662,7 +679,7 @@ p2 <- ggplot() +
   geom_point(data=dki_compare, 
              aes(x=DKI, y=diff, colour = psal)) +
     geom_line(data=df00, aes(x=x,y=y), colour="black", 
-            linetype=2, linewidth=0.3, alpha=0.3) +
+            linetype=2, linewidth=0.6, alpha=0.3) +
   scale_color_distiller(palette = "Spectral", 
                         limits=c(5,35), breaks=c(5,15,25,35),
                         guide="none") +
@@ -681,23 +698,19 @@ p3 <- ggplot() +
                fill = 'lightgrey',
                orientation = "y") +
   geom_hline(yintercept = diff_mean, colour="red", 
-            linetype=2, linewidth=0.3, alpha=0.3) +
+            linetype=2, linewidth=0.6, alpha=0.3) +
   coord_cartesian(ylim=c(diff_min,diff_max)) +
   theme_void() 
 
 
 p <- p1 + p2 + p3 +
   plot_layout(ncol=3, widths = c(5,5,1))
-
-
 p
 
-
-
-
 ```
+
 The dotted grey line in the left-hand figure shows the 1:1 line (DKI for the two 
 methods is equal). The dotted grey line in the right-hand figure shows
 _Difference = 0_. The red dotted line in the histogram shows the mean difference
-(`r print(diff_mean, digits=3)`)
+(**`r format(diff_mean, digits=3)`**)
 
