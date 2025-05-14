@@ -77,24 +77,29 @@ species <- species %>%
 
 ### Match with AMBI
 
-Check if there the species names can be matched with a name on the AMBI species list. By default, the function `.species_match()` from [utils.R](R/utils.R) will **not** match a family name in the observations without _sp._ with a family name in AMBI where _sp._ is included. Bu using the `exact = FALSE` argument, we also get these matches.
+Check if there the species names can be matched with a name on the AMBI species list. By default, the `AMBI()` function will match a family name in the observations without _sp._ with a family name in AMBI where _sp._ is included. By using the `exact_species_match = TRUE` argument only _exact_ matches will be found.
 
 ```{r match species AMBI}
+ 
+species_match <- species %>% 
+  mutate(count=1)
 
-species_match <- species %>%
-  .species_match(ambiR::AMBI_species(), exact=F)
+species_match <- species_match %>%
+  ambiR::AMBI(quiet = T)
+
+species_match <- species_match$matched
 
 ```
 
-There are some species names which appear more than once in the AMBI database e.g. *Ophiuroidea sp.* This results in a warning when joining species names from observations with the AMBI database. The warning can be safely ignored. It will not cause any problems later.
-
-For species which did have a match, replace the look-up name with the one matched in 
-the AMBI list.
+For species which did have a match, replace the look-up name with the one matched in the AMBI list.
 
 ```{r update matched species}
 
 species <- species_match %>%
-  mutate(species = ifelse(is.na(species_match), species, species_match))
+  mutate(species = ifelse(is.na(species_matched), 
+                          species, species_matched)) %>%
+  select(Artsnavn, species)
+  
 
 ```
 
@@ -105,7 +110,7 @@ Select the species names which were not matched with species names in the AMBI d
 ```{r unmatched species}
 
 species_unmatched <- species_match %>%
-  filter(is.na(species_match)) %>%
+  filter(is.na(species_matched)) %>%
   distinct(Artsnavn, species) %>%
   arrange(Artsnavn)
 
@@ -189,12 +194,16 @@ species2 <- species2 %>%
 
 Now try to match the updated species list with AMBI species list.
 
-Again, any warnings about about multiple matches can be safely ignored at this stage.
 
-```{r  match species AMBI 2}
+```{r match species AMBI 2}
 
-species2_match <- species2 %>%
-  .species_match(ambiR::AMBI_species(), exact=F)
+species2_match <- species2 %>% 
+  mutate(count=1)
+
+species2_match <- species2_match %>%
+  ambiR::AMBI(quiet = T)
+
+species2_match <- species2_match$matched
 
 ```
 
@@ -205,7 +214,7 @@ Now select only the species which were not matched.
 ```{r unmatched species AMBI 2}
 
 species2_unmatched <- species2_match %>%
-  filter(is.na(species_match)) %>%
+  filter(is.na(species_matched)) %>%
   distinct(Artsnavn, species) %>%
   arrange(Artsnavn)
 
@@ -228,7 +237,7 @@ species2_fuzzy <- species2_unmatched %>%
 
 species2_fuzzy <- species2_fuzzy %>%
   fuzzyjoin::stringdist_left_join(ambiR::AMBI_species(),
-                                  max_dist=2,
+                                  max_dist=1,
                                   by=c("species_match"="species"),
                                   distance_col = "dist")
 
@@ -249,8 +258,6 @@ Using the strictest match specifications (`max_dist = 1`), then `r nrow(species2
 species2_replace
 
 ```
-
-In this case the name *Lepidepecreum longicorne* recorded in the observations was actually the accepted nomenclature. However our aim here is to find matches with the AMBI species list. So we will change the name to the matched *Lepidepecreum longicornis*
 
 ### Update species list
 
@@ -282,9 +289,6 @@ Add the corrected species names to the observation data
 
 bf <- bf %>%
   left_join(species3, by="Artsnavn") 
-
-
-
   
 ```
 
@@ -324,7 +328,7 @@ psal <- psal %>%
 
 ## Find deepest salinity measurement in each profile
 
-Arrange the data on each sample data by depth and take the deepest measurement
+Arrange the data on each sample date by depth and take the deepest measurement
 
 ```{r salinity bottom}
 
