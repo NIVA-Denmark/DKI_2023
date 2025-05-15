@@ -34,11 +34,19 @@ source("R/utils.R")
 
 Calculating DKI using the [ambiR](https://github.com/NIVA-Denmark/ambiR) package.
 
-# Species observation data
+There are several steps:
+
+* [Species data](#species-observations). Check the species names in the observation data for matches with names in the AMBI database. Where possible, correct names which do not match.
+* [Salinity](#salinity). Find the salinity information necessary to calculate `DKI`.
+* [Calculate DKI](#calculate-dki). Perform the calculations.
+
+# 1. Species observation data
 
 ## Read data
 
-Read species observation data downloaded from ODA [HentData_WDXSYOYGJE.csv](data/HentData_WDXSYOYGJE.csv).
+Read species observation data downloaded from ODA:
+
+[HentData_WDXSYOYGJE.csv](data/HentData_WDXSYOYGJE.csv).
 
 ```{r read_data}
 
@@ -77,7 +85,7 @@ species <- species %>%
 
 ### Match with AMBI
 
-Check if there the species names can be matched with a name on the AMBI species list. By default, the `AMBI()` function will match a family name in the observations without _sp._ with a family name in AMBI where _sp._ is included. By using the `exact_species_match = TRUE` argument only _exact_ matches will be found.
+Check if there the species names can be matched with a name on the AMBI species list. By default, the `AMBI()` function will match a family name in the observations without *sp.* with a family name in AMBI where *sp.* is included. By using the `exact_species_match = TRUE` argument only *exact* matches will be found.
 
 ```{r match species AMBI}
  
@@ -149,7 +157,7 @@ species_unmatched <- data.frame(
 
 Before comparing results from WoRMS with the existing species names, we will *fix* the names as we did previously.
 
-For example, we need to remove parts within parenthesis from WoRMS names e.g. _Phascolion (Phascolion) strombus_ because the AMBI list does not include these.
+For example, we need to remove parts within parenthesis from WoRMS names e.g. *Phascolion (Phascolion) strombus* because the AMBI list does not include these.
 
 ```{r fix worms results}
 
@@ -193,7 +201,6 @@ species2 <- species2 %>%
 ### Match with AMBI - 2nd attempt
 
 Now try to match the updated species list with AMBI species list.
-
 
 ```{r match species AMBI 2}
 
@@ -250,8 +257,7 @@ species2_replace <- species2_fuzzy %>%
 
 ```
 
-Using the strictest match specifications (`max_dist = 1`), then `r nrow(species2_replace)` *fuzzy* 
-`r ifelse(nrow(species2_replace)>1,"matches are","match is")` found:
+Using the strictest match specifications (`max_dist = 1`), then `r nrow(species2_replace)` *fuzzy* `r ifelse(nrow(species2_replace)>1,"matches are","match is")` found:
 
 ```{r fuzzy results}
 
@@ -272,10 +278,20 @@ species3 <- species3 %>%
   select(Artsnavn, species) %>%
   arrange(Artsnavn, species)
 
+
+species3_match <- species3 %>%
+  mutate(count=1) %>%
+  ambiR::AMBI(quiet = T)
+
+species3_match <- species3_match$matched %>%
+  mutate(AMBI=ifelse(is.na(group),F,T)) %>%
+  select(Artsnavn, species, AMBI, AMBI_group=group)
+
 # save the list
 
-write.table(species3, file="results/species_names.csv", 
-            sep=",", col.names=T, row.names=F, quote=T)
+write.table(species3_match, file="results/species_names.csv", 
+            sep=",", col.names=T, row.names=F, quote=T,
+            na="")
 
 ```
 
@@ -292,7 +308,7 @@ bf <- bf %>%
   
 ```
 
-# Salinity data
+# 2. Salinity
 
 After calculating AMBI, We will use the mean salinity at each sampling site to normalize DKI.
 
@@ -360,8 +376,7 @@ psal <- psal %>%
 
 ### Convert salinity mean values to spatial data
 
-Use the latitude and longitude information in the salinity data to create a
-spatial data (`sf`) object and then transform to UTM-32
+Use the latitude and longitude information in the salinity data to create a spatial data (`sf`) object and then transform to UTM-32
 
 ```{r salinity sf}
 
@@ -419,14 +434,13 @@ bf_psal
 
 ```
 
-# Calculate DKI
+# 3. Calculate DKI
 
 ## Calculate DKI with pooled samples
 
 ### Group samples
 
-For DKI v2, samples are pooled in groups to give a total sampling area of
-approximately 0.1 m^2
+For DKI v2, samples are pooled in groups to give a total sampling area of approximately 0.1 m\^2
 
 ```{r}
 
@@ -458,8 +472,7 @@ bf_pooled <- bf_pooled %>%
 
 ### Calculate AMBI for pooled samples
 
-Instead of the original sample nr _Prøvetagningsnummer_, we use the ID for the 
-grouped samples ( _grp_id_ ) to identify replicates when calculating AMBI.
+Instead of the original sample nr *Prøvetagningsnummer*, we use the ID for the grouped samples ( *grp_id* ) to identify replicates when calculating AMBI.
 
 ```{r}
 
@@ -475,9 +488,7 @@ ambi_pooled <- ambi_res_pooled$AMBI
 
 ```
 
-By default, the name of every species which could not be matched with a name in the 
-AMBI database is listed when calling the `AMBI()` function. Here we have used 
-the `quiet = TRUE` option. 
+By default, the name of every species which could not be matched with a name in the AMBI database is listed when calling the `AMBI()` function. Here we have used the `quiet = TRUE` option.
 
 Remember to check which species names were not matched. We have already tested our data before calculating AMBI but it is always a good idea to check once more.
 
@@ -491,8 +502,7 @@ not_found
 
 ```
 
-Check also any warnings generated. If the total number of species is too small or 
-the total number of individuals, then AMBI should not be used.
+Check also any warnings generated. If the total number of species is too small or the total number of individuals, then AMBI should not be used.
 
 ```{r}
 
@@ -500,11 +510,9 @@ ambi_res_pooled$warnings
 
 ```
 
-
 ### Add salinity information
 
-To calculate DKI from the AMBI results for pooled samples, we need to join them 
-to the salinity information calculated [above](#salinity-data).
+To calculate DKI from the AMBI results for pooled samples, we need to join them to the salinity information calculated [above](#salinity).
 
 ```{r}
 
@@ -540,8 +548,7 @@ Here DKI is based on AMBI calculated from individual ungrouped samples.
 
 ### Calculate AMBI
 
-This time we use the original sample ID _Prøvetagningsnummer_ to identify
-replicates when calculating AMBI.
+This time we use the original sample ID *Prøvetagningsnummer* to identify replicates when calculating AMBI.
 
 ```{r}
 
@@ -587,7 +594,7 @@ ambi <- ambi %>%
 
 ```
 
-### Calculate DKI 
+### Calculate DKI
 
 Calculate DKI from AMBI results and salinity.
 
@@ -609,8 +616,7 @@ dki
 
 Download the results for DKI based on individual samples: [DKI.csv](results/DKI.csv)
 
-
-# Compare pooled and individual
+# 4. Compare pooled and individual
 
 Compare DKI based on AMBI calculated from individual samples with DKI from pooled samples
 
@@ -632,7 +638,7 @@ write.table(dki_compare, file="results/DKI_comparison.csv",
 
 ```
 
-Download the data for the comparison of DKI for pooled and individual samples:  [DKI_comparison.csv](results/DKI_comparison.csv)
+Download the data for the comparison of DKI for pooled and individual samples: [DKI_comparison.csv](results/DKI_comparison.csv)
 
 ## Show comparison graphically
 
@@ -711,10 +717,9 @@ p <- p1 + p2 + p3 +
   plot_layout(ncol=3, widths = c(5,5,1))
 p
 
+ggsave(p, filename="results/compare_DKI.png",
+       height=5, width=11, units="in", dpi=300)
+
 ```
 
-The dotted grey line in the left-hand figure shows the 1:1 line (DKI for the two 
-methods is equal). The dotted grey line in the right-hand figure shows
-_Difference = 0_. The red dotted line in the histogram shows the mean difference
-(**`r format(diff_mean, digits=3)`**)
-
+The dotted grey line in the left-hand figure shows the 1:1 line (DKI for the two methods is equal). The dotted grey line in the right-hand figure shows *Difference = 0*. The red dotted line in the histogram shows the mean difference (**`r format(diff_mean, digits=3)`**)

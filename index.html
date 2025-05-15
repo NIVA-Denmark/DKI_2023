@@ -3088,7 +3088,7 @@ vertical-align: -.125em;
     <h2 id="toc-title">DKI Calculations</h2>
    
   <ul>
-  <li><a href="#species-observation-data" id="toc-species-observation-data" class="nav-link active" data-scroll-target="#species-observation-data">Species observation data</a>
+  <li><a href="#species-observation-data" id="toc-species-observation-data" class="nav-link active" data-scroll-target="#species-observation-data">1. Species observation data</a>
   <ul class="collapse">
   <li><a href="#read-data" id="toc-read-data" class="nav-link" data-scroll-target="#read-data">Read data</a></li>
   <li><a href="#check-species-names" id="toc-check-species-names" class="nav-link" data-scroll-target="#check-species-names">Check species names</a>
@@ -3106,7 +3106,7 @@ vertical-align: -.125em;
   </ul></li>
   <li><a href="#update-observation-data" id="toc-update-observation-data" class="nav-link" data-scroll-target="#update-observation-data">Update observation data</a></li>
   </ul></li>
-  <li><a href="#salinity-data" id="toc-salinity-data" class="nav-link" data-scroll-target="#salinity-data">Salinity data</a>
+  <li><a href="#salinity" id="toc-salinity" class="nav-link" data-scroll-target="#salinity">2. Salinity</a>
   <ul class="collapse">
   <li><a href="#read-salinity-data" id="toc-read-salinity-data" class="nav-link" data-scroll-target="#read-salinity-data">Read salinity data</a></li>
   <li><a href="#find-deepest-salinity-measurement-in-each-profile" id="toc-find-deepest-salinity-measurement-in-each-profile" class="nav-link" data-scroll-target="#find-deepest-salinity-measurement-in-each-profile">Find deepest salinity measurement in each profile</a></li>
@@ -3118,7 +3118,7 @@ vertical-align: -.125em;
   <li><a href="#match-benthic-fauna-sample-and-salinity-locations" id="toc-match-benthic-fauna-sample-and-salinity-locations" class="nav-link" data-scroll-target="#match-benthic-fauna-sample-and-salinity-locations">Match benthic fauna sample and salinity locations</a></li>
   </ul></li>
   </ul></li>
-  <li><a href="#calculate-dki" id="toc-calculate-dki" class="nav-link" data-scroll-target="#calculate-dki">Calculate DKI</a>
+  <li><a href="#calculate-dki" id="toc-calculate-dki" class="nav-link" data-scroll-target="#calculate-dki">3. Calculate DKI</a>
   <ul class="collapse">
   <li><a href="#calculate-dki-with-pooled-samples" id="toc-calculate-dki-with-pooled-samples" class="nav-link" data-scroll-target="#calculate-dki-with-pooled-samples">Calculate DKI with pooled samples</a>
   <ul class="collapse">
@@ -3134,7 +3134,7 @@ vertical-align: -.125em;
   <li><a href="#calculate-dki-1" id="toc-calculate-dki-1" class="nav-link" data-scroll-target="#calculate-dki-1">Calculate DKI</a></li>
   </ul></li>
   </ul></li>
-  <li><a href="#compare-pooled-and-individual" id="toc-compare-pooled-and-individual" class="nav-link" data-scroll-target="#compare-pooled-and-individual">Compare pooled and individual</a>
+  <li><a href="#compare-pooled-and-individual" id="toc-compare-pooled-and-individual" class="nav-link" data-scroll-target="#compare-pooled-and-individual">4. Compare pooled and individual</a>
   <ul class="collapse">
   <li><a href="#show-comparison-graphically" id="toc-show-comparison-graphically" class="nav-link" data-scroll-target="#show-comparison-graphically">Show comparison graphically</a></li>
   </ul></li>
@@ -3165,11 +3165,18 @@ vertical-align: -.125em;
 
 
 <p>Calculating DKI using the <a href="https://github.com/NIVA-Denmark/ambiR">ambiR</a> package.</p>
+<p>There are several steps:</p>
+<ul>
+<li><a href="#species-observations">Species data</a>. Check the species names in the observation data for matches with names in the AMBI database. Where possible, correct names which do not match.</li>
+<li><a href="#salinity">Salinity</a>. Find the salinity information necessary to calculate <code>DKI</code>.</li>
+<li><a href="#calculate-dki">Calculate DKI</a>. Perform the calculations.</li>
+</ul>
 <section id="species-observation-data" class="level1">
-<h1>Species observation data</h1>
+<h1>1. Species observation data</h1>
 <section id="read-data" class="level2">
 <h2 class="anchored" data-anchor-id="read-data">Read data</h2>
-<p>Read species observation data downloaded from ODA <a href="data/HentData_WDXSYOYGJE.csv">HentData_WDXSYOYGJE.csv</a>.</p>
+<p>Read species observation data downloaded from ODA:</p>
+<p><a href="data/HentData_WDXSYOYGJE.csv">HentData_WDXSYOYGJE.csv</a>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>bf <span class="ot">&lt;-</span> <span class="fu">read_delim</span>(<span class="st">&quot;data/HentData_WDXSYOYGJE.csv&quot;</span>, </span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">delim =</span> <span class="st">&quot;;&quot;</span>, <span class="at">escape_double=</span><span class="cn">FALSE</span>, </span>
@@ -3416,10 +3423,20 @@ vertical-align: -.125em;
 <span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Artsnavn, species) <span class="sc">%&gt;%</span></span>
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(Artsnavn, species)</span>
 <span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="co"># save the list</span></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(species3, <span class="at">file=</span><span class="st">&quot;results/species_names.csv&quot;</span>, </span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">sep=</span><span class="st">&quot;,&quot;</span>, <span class="at">col.names=</span>T, <span class="at">row.names=</span>F, <span class="at">quote=</span>T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>species3_match <span class="ot">&lt;-</span> species3 <span class="sc">%&gt;%</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">count=</span><span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  ambiR<span class="sc">::</span><span class="fu">AMBI</span>(<span class="at">quiet =</span> T)</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>species3_match <span class="ot">&lt;-</span> species3_match<span class="sc">$</span>matched <span class="sc">%&gt;%</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">AMBI=</span><span class="fu">ifelse</span>(<span class="fu">is.na</span>(group),F,T)) <span class="sc">%&gt;%</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Artsnavn, species, AMBI, <span class="at">AMBI_group=</span>group)</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="co"># save the list</span></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(species3_match, <span class="at">file=</span><span class="st">&quot;results/species_names.csv&quot;</span>, </span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">sep=</span><span class="st">&quot;,&quot;</span>, <span class="at">col.names=</span>T, <span class="at">row.names=</span>F, <span class="at">quote=</span>T,</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">na=</span><span class="st">&quot;&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The full list of species names after corrections is here: <a href="results/species_names.csv">species_names.csv</a></p>
 </section>
@@ -3433,8 +3450,8 @@ vertical-align: -.125em;
 </div>
 </section>
 </section>
-<section id="salinity-data" class="level1">
-<h1>Salinity data</h1>
+<section id="salinity" class="level1">
+<h1>2. Salinity</h1>
 <p>After calculating AMBI, We will use the mean salinity at each sampling site to normalize DKI.</p>
 <section id="read-salinity-data" class="level2">
 <h2 class="anchored" data-anchor-id="read-salinity-data">Read salinity data</h2>
@@ -3465,7 +3482,7 @@ vertical-align: -.125em;
 </section>
 <section id="find-deepest-salinity-measurement-in-each-profile" class="level2">
 <h2 class="anchored" data-anchor-id="find-deepest-salinity-measurement-in-each-profile">Find deepest salinity measurement in each profile</h2>
-<p>Arrange the data on each sample data by depth and take the deepest measurement</p>
+<p>Arrange the data on each sample date by depth and take the deepest measurement</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># find deepest salinity measurement for each profile</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>psal <span class="ot">&lt;-</span> psal <span class="sc">%&gt;%</span> </span>
@@ -3555,7 +3572,7 @@ vertical-align: -.125em;
 </section>
 </section>
 <section id="calculate-dki" class="level1">
-<h1>Calculate DKI</h1>
+<h1>3. Calculate DKI</h1>
 <section id="calculate-dki-with-pooled-samples" class="level2">
 <h2 class="anchored" data-anchor-id="calculate-dki-with-pooled-samples">Calculate DKI with pooled samples</h2>
 <section id="group-samples" class="level3">
@@ -3640,7 +3657,7 @@ vertical-align: -.125em;
 </section>
 <section id="add-salinity-information" class="level3">
 <h3 class="anchored" data-anchor-id="add-salinity-information">Add salinity information</h3>
-<p>To calculate DKI from the AMBI results for pooled samples, we need to join them to the salinity information calculated <a href="#salinity-data">above</a>.</p>
+<p>To calculate DKI from the AMBI results for pooled samples, we need to join them to the salinity information calculated <a href="#salinity">above</a>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ambi_pooled <span class="ot">&lt;-</span> ambi_pooled <span class="sc">%&gt;%</span></span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(os_nr, os_navn, Dato, Tid, AMBI, H, S, fNA, N) <span class="sc">%&gt;%</span></span>
@@ -3765,7 +3782,7 @@ vertical-align: -.125em;
 </section>
 </section>
 <section id="compare-pooled-and-individual" class="level1">
-<h1>Compare pooled and individual</h1>
+<h1>4. Compare pooled and individual</h1>
 <p>Compare DKI based on AMBI calculated from individual samples with DKI from pooled samples</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>dki_compare <span class="ot">&lt;-</span> dki <span class="sc">%&gt;%</span></span>
@@ -3862,6 +3879,8 @@ vertical-align: -.125em;
 </figure>
 </div>
 </div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(p, <span class="at">filename=</span><span class="st">&quot;results/compare_DKI.png&quot;</span>,</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">height=</span><span class="dv">5</span>, <span class="at">width=</span><span class="dv">11</span>, <span class="at">units=</span><span class="st">&quot;in&quot;</span>, <span class="at">dpi=</span><span class="dv">300</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The dotted grey line in the left-hand figure shows the 1:1 line (DKI for the two methods is equal). The dotted grey line in the right-hand figure shows <em>Difference = 0</em>. The red dotted line in the histogram shows the mean difference (<strong>-0.000273</strong>)</p>
 </section>
