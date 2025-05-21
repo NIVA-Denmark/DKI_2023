@@ -42,6 +42,175 @@ DKI_group_samples <- function(df, group_vars=c(),
 
 }
 
+.GetSpeciesIDs<-function(searchtext, verbose=F){
+  # ------ get  AphiaID from search text using fuzzy match ---------
+  #Build the URL to get the data from
+  
+  searchtext2 <- gsub(" ","%20",searchtext)
+  searchtext2 =paste0("&scientificnames%5B%5D=",searchtext2)
+  searchtext2 <- paste0(searchtext2, collapse="")
+  
+  url<-sprintf("https://marinespecies.org/rest/AphiaRecordsByMatchNames?marine_only=true&extant_only=true&match_authority=true%s",searchtext2)  
+  
+  x<-http_status(GET(url))
+  AphiaRecord <- data.frame(AphiaID=NULL)
+  if(x$reason!="OK"){
+    if(verbose==T){
+      cat(paste0(searchtext,": ",x$reason,"\n"))
+    }
+    return(AphiaRecord)
+  }
+  AphiaRecord <- fromJSON(url) 
+
+  if(length(AphiaRecord)>0){
+    names(AphiaRecord) <-  searchtext
+      
+    AphiaRecord <-  AphiaRecord %>%
+      bind_rows(.id="species") %>%
+      filter(status=="accepted")
+  }else{
+    AphiaRecord <- data.frame(AphiaID=NULL)
+    }
+  return(AphiaRecord)
+}
+
+
+match_species <- function(df, column_species="Artsnavn", 
+                          column_species_corrected="species",
+                          verbose=T){
+  
+  # function trying matches in GBIF and WoRMS
+  
+  # Get unique species names from the observation data
+  column_species_matched <- "species_match"
+  
+  species <- df %>%
+    distinct(!!as.name(column_species)) 
+  
+  # Use the `.fix_name()` function from [utils.R](R/utils.R). 
+  # This will  do some simple corrections to species names 
+  # e.g. replace any *indet.* in  species names and remove 
+  # any double spaces in names.
+  
+  species <- species %>% 
+    mutate(!!column_species_corrected := 
+             .fix_name(!!as.name(column_species)))  %>%
+    mutate(!!column_species_corrected := 
+             gsub(" sp.","",!!as.name(column_species_corrected)))
+  
+  
+  # start with gbif - it's faster
+  species_list <- species %>%
+    pull(column_species_corrected)
+  
+  if(verbose==T){
+    cli::cli_inform(paste0("Checking ", length(species_list), " names in GBIF"))
+  }
+  
+  
+  res_gbif <- rgbif::name_backbone_checklist(species_list)
+  res_unmatched <- res_gbif %>%
+    filter(is.na(usageKey))
+  
+  if(verbose==T){
+    nmissing <- res_gbif %>%
+      filter(is.na(usageKey))%>%
+      nrow()
+    nfound <- length(species_list) - nmissing
+    cli::cli_inform(paste0("...matched ", nfound, ""))
+  }
+  
+  # check worms 
+  species_list <- res_unmatched$verbatim_name %>% 
+    unique()
+  
+  nmax <- 40
+  n <- seq_along(species_list)
+  
+  if(verbose==T){
+    cli::cli_inform(paste0("Checking ", nrow(res_unmatched), " names in WoRMS"))
+  }
+  species_split <- split(species_list, ceiling(n/nmax))
+  
+  res_worms <- species_split %>%
+    purrr::map(.GetSpeciesIDs, .progress = T) %>%
+    bind_rows()
+  
+  if(verbose==T){
+    nfound <- res_worms %>%
+      nrow()
+    cli::cli_inform(paste0("...matched ", nfound, ""))
+  }
+  
+  res_gbif <- res_gbif %>%
+    mutate(rank=tolower(rank)) %>%
+    select(verbatim_index,
+           !!as.name(column_species_corrected):=verbatim_name,
+           !!as.name(column_species_matched):=canonicalName,
+           rank,
+           kingdom,
+           phylum,
+           family,
+           genus,
+           class,
+           order,
+           id=usageKey) %>%
+    mutate(source="gbif")
+  
+  res_worms <- res_worms %>%
+    select(!!as.name(column_species_corrected):=species, 
+           !!as.name(column_species_matched):=scientificname,
+           rank,
+           kingdom,
+           phylum,
+           family,
+           genus,
+           class,
+           order,
+           id=AphiaID) %>%
+    mutate(source="worms")
+  
+  res_worms <- res_worms %>%
+    left_join(res_gbif %>% 
+                select(!!as.name(column_species_corrected), verbatim_index),
+              by=c(column_species_corrected))
+  
+  res <- res_gbif %>%
+    filter(!verbatim_index %in% res_worms$verbatim_index) %>%
+    bind_rows(res_worms) %>%
+    arrange(verbatim_index) %>%
+    select(-verbatim_index)
+  
+  
+  res <- species %>%
+    left_join(res, by=c(column_species_corrected),
+              relationship = "many-to-many") %>%
+    select(-!!as.name(column_species_corrected))
+  
+  names(res)[names(res)==column_species_matched] <- column_species_corrected 
+  
+  # if(verbose==T){
+  #   nfound <- res %>%
+  #     filter(!is.na(id))
+  #     nrow()
+  #   ncorrected <- res %>%
+  #       filter(!is.na(id)) %>%
+  #     filter(!!as.name(column_species) != !!as.name(column_species_corrected)) %>%
+  #     nrow()
+  #     
+  #   cli::cli_inform(paste0("Returning ", nrow(res), " species"))
+  #   cli::cli_inform(paste0("matched: ", found, " species"))
+  #   cli::cli_inform(paste0("corrected: ", ncorrected, " species"))
+  # }
+  # 
+  
+  return(res)
+}
+
+
+
+
+
 
 .GetSpeciesIDFuzzy<-function(searchtext, verbose=F){
   # ------ get  AphiaID from search text using fuzzy match ---------
